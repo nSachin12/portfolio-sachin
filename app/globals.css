@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* =============================================
+   SHADCN / DESIGN SYSTEM TOKENS — DARK FIRST
+   ============================================= */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-blue: var(--blue);
+  --color-purple: var(--purple);
+  --color-cyan: var(--cyan);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* =============================================
+   ROOT — DARK DEFAULTS
+   ============================================= */
+:root {
+  --radius: 0.625rem;
+
+  --background: #080a0f;
+  --foreground: #f0f2f8;
+
+  --card: #0d1117;
+  --card-foreground: #f0f2f8;
+
+  --popover: #0d1117;
+  --popover-foreground: #f0f2f8;
+
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1a1f2e;
+  --secondary-foreground: rgba(240, 242, 248, 0.8);
+
+  --muted: #131827;
+  --muted-foreground: rgba(240, 242, 248, 0.65);
+
+  --accent: #1e2a45;
+  --accent-foreground: #f0f2f8;
+
+  --destructive: #ef4444;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #3b82f6;
+
+  --blue: #3b82f6;
+  --blue-glow: rgba(59, 130, 246, 0.3);
+  --purple: #8b5cf6;
+  --purple-glow: rgba(139, 92, 246, 0.3);
+  --cyan: #06b6d4;
+  --cyan-glow: rgba(6, 182, 212, 0.3);
+
+  --glass-bg: rgba(13, 17, 23, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(20px);
+}
+
+/* =============================================
+   BASE RESET
+   ============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  margin: 0;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+/* =============================================
+   SCROLLBAR
+   ============================================= */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+::selection {
+  background: rgba(59, 130, 246, 0.25);
+  color: var(--foreground);
+}
+
+/* =============================================
+   GLASSMORPHISM
+   ============================================= */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+/* =============================================
+   GRADIENTS
+   ============================================= */
+.gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+.gradient-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+.gradient-blue-purple { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); }
+.gradient-cyan-blue { background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); }
+
+.text-gradient {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* =============================================
+   GLOW EFFECTS
+   ============================================= */
+.glow-blue { box-shadow: 0 0 30px var(--blue-glow); }
+.glow-purple { box-shadow: 0 0 30px var(--purple-glow); }
+.glow-cyan { box-shadow: 0 0 30px var(--cyan-glow); }
+
+/* =============================================
+   GRID BACKGROUND
+   ============================================= */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* =============================================
+   FOCUS
+   ============================================= */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* =============================================
+   INTERACTIVE CURSORS
+   (Tailwind v4 no longer sets these by default)
+   ============================================= */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+summary,
+select,
+[type="checkbox"],
+[type="radio"],
+[type="range"],
+[type="submit"],
+[type="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+[disabled] {
+  cursor: not-allowed;
+}
+
+/* =============================================
+   PROSE (blog)
+   ============================================= */
+.prose { color: var(--foreground); max-width: 72ch; }
+.prose h1, .prose h2, .prose h3, .prose h4 { color: var(--foreground); margin-top: 2em; margin-bottom: 0.75em; }
+.prose p { margin-bottom: 1.25em; color: var(--muted-foreground); }
+.prose a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.prose code { background: var(--muted); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.875em; font-family: var(--font-mono); }
+.prose pre { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25em; overflow-x: auto; }
+.prose pre code { background: none; padding: 0; }
+.prose blockquote { border-left: 3px solid var(--primary); padding-left: 1.25em; color: var(--muted-foreground); font-style: italic; }
+.prose ul, .prose ol { padding-left: 1.5em; margin-bottom: 1.25em; color: var(--muted-foreground); }
+.prose li { margin-bottom: 0.4em; }
+
+/* =============================================
+   TIPTAP EDITOR
+   ============================================= */
+.tiptap-editor .ProseMirror { min-height: 400px; padding: 1rem; outline: none; color: var(--foreground); }
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
