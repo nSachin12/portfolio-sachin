@@ -87,7 +87,7 @@ export function Navbar() {
           </div>
 
           {/* CTA + mobile toggle */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
             <Button asChild size="sm" variant="glow" className="hidden md:inline-flex">
               <Link href="/hire-me">Hire Me</Link>
             </Button>

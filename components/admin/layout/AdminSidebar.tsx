@@ -19,6 +19,7 @@ import {
   Trophy,
   BookOpen,
   FileBadge,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { signOut } from "@/lib/actions/auth"
@@ -39,21 +40,49 @@ const navItems = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  open?: boolean
+  onClose?: () => void
+}
+
+export function AdminSidebar({ open = false, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex h-full w-64 flex-col border-r border-border bg-card/50 backdrop-blur-xl">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-          <Zap className="h-4 w-4 text-primary" />
+    <>
+      {/* Mobile backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex h-full w-64 flex-col border-r border-border bg-card/95 backdrop-blur-xl transition-transform duration-300 lg:bg-card/50 lg:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+            <Zap className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-foreground">Admin Panel</p>
+            <p className="text-xs text-muted-foreground">Portfolio CMS</p>
+          </div>
+          {/* Close button (mobile only) */}
+          <button
+            onClick={onClose}
+            className="lg:hidden text-muted-foreground hover:text-foreground transition-colors p-1"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <div>
-          <p className="text-sm font-bold text-foreground">Admin Panel</p>
-          <p className="text-xs text-muted-foreground">Portfolio CMS</p>
-        </div>
-      </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
@@ -65,6 +94,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={cn(
                 "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -106,6 +136,7 @@ export function AdminSidebar() {
           </button>
         </form>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }

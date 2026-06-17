@@ -179,7 +179,7 @@ export function BlogForm({ blog }: { blog?: Blog }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-3">
           <Button type="submit" disabled={isPending} className="gap-2">
             {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
