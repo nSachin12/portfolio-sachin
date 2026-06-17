@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { createCertification, updateCertification, deleteCertification } from "@/lib/actions/content"
 import { certificationSchema } from "@/lib/validations"
+import { splitTags } from "@/lib/utils/tags"
 import type { Certification } from "@/lib/types"
 import type { z } from "zod"
 
@@ -55,9 +56,9 @@ export function CertificationForm({ certification }: { certification?: Certifica
   const featured = watch("featured")
 
   function addSkill() {
-    const v = skillInput.trim()
-    if (!v || skills.includes(v)) return
-    setValue("skills", [...skills, v])
+    const additions = splitTags(skillInput, skills)
+    if (additions.length === 0) return
+    setValue("skills", [...skills, ...additions])
     setSkillInput("")
   }
 

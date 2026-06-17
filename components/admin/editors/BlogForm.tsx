@@ -16,6 +16,7 @@ import { RichTextEditor } from "@/components/admin/editors/RichTextEditor"
 import { createBlog, updateBlog, deleteBlog } from "@/lib/actions/blog"
 import { blogSchema } from "@/lib/validations"
 import { generateSlug } from "@/lib/utils/format"
+import { splitTags } from "@/lib/utils/tags"
 import type { Blog } from "@/lib/types"
 import type { z } from "zod"
 
@@ -59,9 +60,9 @@ export function BlogForm({ blog }: { blog?: Blog }) {
   }
 
   function addTag() {
-    const v = tagInput.trim()
-    if (!v || tags.includes(v)) return
-    setValue("tags", [...tags, v])
+    const additions = splitTags(tagInput, tags)
+    if (additions.length === 0) return
+    setValue("tags", [...tags, ...additions])
     setTagInput("")
   }
 

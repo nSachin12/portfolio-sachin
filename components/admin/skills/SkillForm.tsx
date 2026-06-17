@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createSkill, updateSkill, deleteSkill } from "@/lib/actions/content"
 import { skillSchema } from "@/lib/validations"
+import { splitTags } from "@/lib/utils/tags"
 import type { Skill } from "@/lib/types"
 import type { z } from "zod"
 
@@ -44,19 +45,42 @@ export function SkillForm({ skill }: { skill?: Skill }) {
 
   function onSubmit(data: FormValues) {
     startTransition(async () => {
-      const payload = {
-        name: data.name,
+      const base = {
         category: data.category,
         proficiency: Number(data.proficiency),
         icon: data.icon || null,
       }
-      const result = isEditing ? await updateSkill(skill.id, payload) : await createSkill(payload)
-      if (result.success) {
-        toast.success(isEditing ? "Skill updated" : "Skill created")
+
+      // Editing always targets a single skill.
+      if (isEditing) {
+        const result = await updateSkill(skill.id, { name: data.name, ...base })
+        if (result.success) {
+          toast.success("Skill updated")
+          router.push("/admin/skills")
+          router.refresh()
+        } else {
+          toast.error(result.error)
+        }
+        return
+      }
+
+      // Creating: allow comma-separated names → one skill each.
+      const names = splitTags(data.name)
+      if (names.length === 0) {
+        toast.error("Please enter at least one skill name.")
+        return
+      }
+
+      const results = await Promise.all(names.map((name) => createSkill({ name, ...base })))
+      const failed = results.filter((r) => !r.success).length
+
+      if (failed === 0) {
+        toast.success(names.length === 1 ? "Skill created" : `${names.length} skills created`)
         router.push("/admin/skills")
         router.refresh()
       } else {
-        toast.error(result.error)
+        toast.error(`${failed} of ${names.length} skills failed to save.`)
+        router.refresh()
       }
     })
   }
@@ -82,7 +106,12 @@ export function SkillForm({ skill }: { skill?: Skill }) {
 
         <div className="space-y-1.5">
           <Label htmlFor="name">Name *</Label>
-          <Input id="name" placeholder="e.g. Python, LangChain" {...register("name")} />
+          <Input id="name" placeholder="e.g. Python, LangChain, FastAPI" {...register("name")} />
+          {!isEditing && (
+            <p className="text-xs text-muted-foreground">
+              Tip: add several at once, comma-separated — each becomes its own skill with the category &amp; proficiency below.
+            </p>
+          )}
           {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
         </div>
 

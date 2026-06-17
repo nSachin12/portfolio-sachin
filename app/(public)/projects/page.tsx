@@ -64,7 +64,7 @@ export default async function ProjectsPage() {
                   {project.technologies?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
                       {project.technologies.slice(0, 4).map((tech) => (
-                        <Badge key={tech} variant="glass" className="text-xs">{tech}</Badge>
+                        <Badge key={tech} variant="glass" className="text-xs max-w-full whitespace-normal break-words">{tech}</Badge>
                       ))}
                       {project.technologies.length > 4 && (
                         <Badge variant="glass" className="text-xs">+{project.technologies.length - 4}</Badge>

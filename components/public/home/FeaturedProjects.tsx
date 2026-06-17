@@ -55,7 +55,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         {project.technologies?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {project.technologies.slice(0, 4).map((tech) => (
-              <Badge key={tech} variant="glass" className="text-xs">
+              <Badge key={tech} variant="glass" className="text-xs max-w-full whitespace-normal break-words">
                 {tech}
               </Badge>
             ))}

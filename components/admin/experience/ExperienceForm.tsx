@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { createExperience, updateExperience, deleteExperience } from "@/lib/actions/content"
 import { experienceSchema } from "@/lib/validations"
+import { splitTags } from "@/lib/utils/tags"
 import type { Experience } from "@/lib/types"
 import type { z } from "zod"
 
@@ -66,9 +67,9 @@ export function ExperienceForm({ experience }: { experience?: Experience }) {
     setRespInput("")
   }
   function addTech() {
-    const v = techInput.trim()
-    if (!v || technologies.includes(v)) return
-    setValue("technologies", [...technologies, v])
+    const additions = splitTags(techInput, technologies)
+    if (additions.length === 0) return
+    setValue("technologies", [...technologies, ...additions])
     setTechInput("")
   }
 

@@ -13,9 +13,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { createProject, updateProject, deleteProject, uploadProjectImage } from "@/lib/actions/projects"
+import { createProject, updateProject, deleteProject } from "@/lib/actions/projects"
+import { createClient } from "@/lib/supabase/client"
 import { projectSchema } from "@/lib/validations"
 import { generateSlug } from "@/lib/utils/format"
+import { splitTags } from "@/lib/utils/tags"
 import type { Project } from "@/lib/types"
 import type { z } from "zod"
 
@@ -76,10 +78,10 @@ export function ProjectForm({ project }: ProjectFormProps) {
   }
 
   function addTech() {
-    const tech = techInput.trim()
     const techs = technologies ?? []
-    if (!tech || techs.includes(tech)) return
-    setValue("technologies", [...techs, tech])
+    const additions = splitTags(techInput, techs)
+    if (additions.length === 0) return
+    setValue("technologies", [...techs, ...additions])
     setTechInput("")
   }
 
@@ -98,16 +100,33 @@ export function ProjectForm({ project }: ProjectFormProps) {
     startTransition(async () => {
       let imageUrl = data.image_url || null
 
-      // If a file was chosen from the device, upload it first.
+      // Upload the chosen file straight from the browser to Supabase Storage.
+      // This bypasses the Server Action body-size limit and supports large images.
       if (imageFile) {
-        const formData = new FormData()
-        formData.set("file", imageFile)
-        const uploadResult = await uploadProjectImage(formData)
-        if (!uploadResult.success) {
-          toast.error(uploadResult.error)
+        if (!imageFile.type.startsWith("image/")) {
+          toast.error("Only image files are allowed.")
           return
         }
-        imageUrl = uploadResult.data.image_url
+        if (imageFile.size > 10 * 1024 * 1024) {
+          toast.error("Image is too large (max 10MB).")
+          return
+        }
+
+        const supabase = createClient()
+        const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+        const path = `${Date.now()}-${safeName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from("project-images")
+          .upload(path, imageFile, { upsert: false })
+
+        if (uploadError) {
+          toast.error(`Upload failed: ${uploadError.message}`)
+          return
+        }
+
+        const { data: pub } = supabase.storage.from("project-images").getPublicUrl(path)
+        imageUrl = pub.publicUrl
       }
 
       const payload = {
@@ -213,7 +232,7 @@ export function ProjectForm({ project }: ProjectFormProps) {
                   className="hidden"
                   onChange={handleImageChange}
                 />
-                <p className="text-xs text-muted-foreground">PNG/JPG/WebP, up to 5MB. This shows on the public project card.</p>
+                <p className="text-xs text-muted-foreground">PNG/JPG/WebP, up to 10MB. This shows on the public project card.</p>
                 <Input placeholder="…or paste an image URL" {...register("image_url")} />
               </div>
             </div>

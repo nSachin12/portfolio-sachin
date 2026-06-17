@@ -55,11 +55,14 @@ export default async function AdminProjectsPage() {
                   {project.featured && <Badge variant="blue" className="text-xs">Featured</Badge>}
                   {!project.published && <Badge variant="glass" className="text-xs">Draft</Badge>}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{project.description}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{project.description}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {project.technologies.slice(0, 4).map((tech) => (
-                    <Badge key={tech} variant="glass" className="text-xs">{tech}</Badge>
+                  {project.technologies.slice(0, 6).map((tech) => (
+                    <Badge key={tech} variant="glass" className="text-xs max-w-full whitespace-normal break-words">{tech}</Badge>
                   ))}
+                  {project.technologies.length > 6 && (
+                    <Badge variant="glass" className="text-xs">+{project.technologies.length - 6}</Badge>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
