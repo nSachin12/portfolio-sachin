@@ -66,7 +66,7 @@ export default async function TestimonialsPage() {
                   <div className="flex items-center gap-3">
                     <div className="relative h-9 w-9 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0">
                       {t.avatar_url ? (
-                        <Image src={t.avatar_url} alt={t.name} fill className="object-cover" />
+                        <Image src={t.avatar_url} alt={t.name} fill sizes="36px" className="object-cover" />
                       ) : (
                         <div className="flex h-full items-center justify-center text-xs font-bold text-primary">{t.name[0]}</div>
                       )}

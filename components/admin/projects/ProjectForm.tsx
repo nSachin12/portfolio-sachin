@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { createProject, updateProject, deleteProject } from "@/lib/actions/projects"
 import { createClient } from "@/lib/supabase/client"
+import { compressImage } from "@/lib/utils/image"
 import { projectSchema } from "@/lib/validations"
 import { generateSlug } from "@/lib/utils/format"
 import { splitTags } from "@/lib/utils/tags"
@@ -112,13 +113,16 @@ export function ProjectForm({ project }: ProjectFormProps) {
           return
         }
 
+        // Resize/compress in the browser so stored files stay small & fast.
+        const optimized = await compressImage(imageFile, { maxDimension: 1600, quality: 0.85 })
+
         const supabase = createClient()
-        const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+        const safeName = optimized.name.replace(/[^a-zA-Z0-9._-]/g, "_")
         const path = `${Date.now()}-${safeName}`
 
         const { error: uploadError } = await supabase.storage
           .from("project-images")
-          .upload(path, imageFile, { upsert: false })
+          .upload(path, optimized, { contentType: optimized.type, upsert: false })
 
         if (uploadError) {
           toast.error(`Upload failed: ${uploadError.message}`)

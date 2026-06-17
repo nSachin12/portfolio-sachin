@@ -4,6 +4,7 @@ import { MapPin, Zap, Users, Code2, Brain } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getProfile } from "@/lib/actions/profile"
 import { getSkills } from "@/lib/actions/content"
+import { getProjects } from "@/lib/actions/projects"
 import { siteConfig } from "@/config/site"
 import { formatExperienceValue } from "@/lib/utils/format"
 
@@ -22,7 +23,13 @@ const highlights = [
 ]
 
 export default async function AboutPage() {
-  const [profile, skills] = await Promise.all([getProfile(), getSkills()])
+  const [profile, skills, projectsResult] = await Promise.all([
+    getProfile(),
+    getSkills(),
+    getProjects({ page: 1, limit: 1 }),
+  ])
+  const projectCount = projectsResult.total
+  const skillsCount = skills.length
 
   const skillsByCategory = skills.reduce<Record<string, typeof skills>>((acc, s) => {
     if (!acc[s.category]) acc[s.category] = []
@@ -43,14 +50,20 @@ export default async function AboutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           {/* Avatar + stats */}
           <div className="lg:col-span-1 flex flex-col items-center text-center space-y-6">
-            <div className="relative h-48 w-48 rounded-2xl overflow-hidden border border-primary/20 bg-card">
-              {profile?.avatar_url ? (
-                <Image src={profile.avatar_url} alt={profile.full_name} fill className="object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-6xl font-bold text-primary/30">
-                  {profile?.full_name?.[0] ?? "S"}
-                </div>
-              )}
+            <div className="relative">
+              {/* Three distinct color glows showing from behind the circle */}
+              <div aria-hidden="true" className="absolute -top-6 -left-6 h-32 w-32 rounded-full bg-primary opacity-60 blur-2xl" />
+              <div aria-hidden="true" className="absolute -bottom-6 -right-6 h-32 w-32 rounded-full bg-purple opacity-60 blur-2xl" />
+              <div aria-hidden="true" className="absolute -bottom-8 left-1/2 -translate-x-1/2 h-32 w-32 rounded-full bg-cyan opacity-60 blur-2xl" />
+              <div className="relative h-52 w-52 sm:h-60 sm:w-60 overflow-hidden rounded-full border border-white/10 bg-card">
+                {profile?.avatar_url ? (
+                  <Image src={profile.avatar_url} alt={profile.full_name} fill sizes="240px" priority className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-7xl font-bold text-primary/30">
+                    {profile?.full_name?.[0] ?? "S"}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -66,17 +79,17 @@ export default async function AboutPage() {
             <div className="w-full grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border bg-card/50 p-4 text-center">
                 <p className="text-2xl font-bold text-foreground">
-                  {formatExperienceValue(profile?.years_of_exp ?? 3, profile?.months_of_exp ?? 0)}
+                  {formatExperienceValue(profile?.years_of_exp ?? 0, profile?.months_of_exp ?? 0)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">Experience</p>
               </div>
               <div className="rounded-xl border border-border bg-card/50 p-4 text-center">
-                <p className="text-2xl font-bold text-foreground">20+</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Projects</p>
+                <p className="text-2xl font-bold text-foreground">{projectCount}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{projectCount === 1 ? "Project" : "Projects"}</p>
               </div>
               <div className="rounded-xl border border-border bg-card/50 p-4 text-center">
-                <p className="text-2xl font-bold text-foreground">15+</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Clients</p>
+                <p className="text-2xl font-bold text-foreground">{skillsCount}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{skillsCount === 1 ? "Skill" : "Skills"}</p>
               </div>
               <div className="rounded-xl border border-border bg-card/50 p-4 text-center">
                 <div className="flex items-center justify-center gap-1 mt-1">

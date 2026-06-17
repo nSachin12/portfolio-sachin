@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createProfile, updateProfile, uploadProfileAvatar } from "@/lib/actions/profile"
 import { profileSchema, type ProfileValues } from "@/lib/validations"
+import { compressImage } from "@/lib/utils/image"
 import type { Profile } from "@/lib/types"
 
 interface ProfileFormProps {
@@ -52,8 +53,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       let avatarUrl = profile?.avatar_url ?? null
 
       if (avatarFile) {
+        const optimized = await compressImage(avatarFile, { maxDimension: 800, quality: 0.85 })
         const formData = new FormData()
-        formData.set("file", avatarFile)
+        formData.set("file", optimized)
 
         const uploadResult = await uploadProfileAvatar(formData)
         if (!uploadResult.success) {
@@ -93,7 +95,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           <div className="flex flex-col gap-4 rounded-xl border border-dashed border-border bg-background/40 p-4 sm:flex-row sm:items-center">
             <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-border bg-card shrink-0">
               {profile?.avatar_url ? (
-                <Image src={profile.avatar_url} alt={profile.full_name} fill className="object-cover" />
+                <Image src={profile.avatar_url} alt={profile.full_name} fill sizes="80px" className="object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-primary/40">
                   {profile?.full_name?.[0] ?? "S"}

@@ -43,7 +43,7 @@ export default async function BlogPage() {
               >
                 <div className="relative h-44 bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10 overflow-hidden">
                   {post.cover_image_url ? (
-                    <Image src={post.cover_image_url} alt={post.title} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <Image src={post.cover_image_url} alt={post.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <FileText className="h-10 w-10 text-muted-foreground/30" />

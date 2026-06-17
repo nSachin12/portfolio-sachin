@@ -82,7 +82,7 @@ export default async function ProjectPage({ params }: Props) {
         {/* Cover image */}
         <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10 mb-10">
           {project.image_url ? (
-            <Image src={project.image_url} alt={project.title} fill className="object-cover" priority />
+            <Image src={project.image_url} alt={project.title} fill sizes="(max-width: 896px) 100vw, 896px" priority className="object-cover" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <Layers className="h-16 w-16 text-muted-foreground/30" />
@@ -122,7 +122,7 @@ export default async function ProjectPage({ params }: Props) {
               {project.screenshots.map((shot, i) => (
                 <figure key={i} className="overflow-hidden rounded-xl border border-border">
                   <div className="relative aspect-video bg-card">
-                    <Image src={shot.url} alt={shot.caption ?? `${project.title} screenshot ${i + 1}`} fill className="object-cover" />
+                    <Image src={shot.url} alt={shot.caption ?? `${project.title} screenshot ${i + 1}`} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
                   </div>
                   {shot.caption && (
                     <figcaption className="px-3 py-2 text-xs text-muted-foreground">{shot.caption}</figcaption>

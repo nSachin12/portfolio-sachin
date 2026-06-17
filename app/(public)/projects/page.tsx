@@ -43,7 +43,7 @@ export default async function ProjectsPage() {
               >
                 <div className="relative h-64 sm:h-72 bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10 overflow-hidden">
                   {project.image_url ? (
-                    <Image src={project.image_url} alt={project.title} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <Image src={project.image_url} alt={project.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Layers className="h-14 w-14 text-muted-foreground/30" />

@@ -42,7 +42,7 @@ export default async function AdminProjectsPage() {
             >
               <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10">
                 {project.image_url ? (
-                  <Image src={project.image_url} alt={project.title} fill className="object-cover" />
+                  <Image src={project.image_url} alt={project.title} fill sizes="96px" className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
                     <Layers className="h-6 w-6 text-muted-foreground/30" />

@@ -67,7 +67,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {post.cover_image_url && (
           <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-border mb-10">
-            <Image src={post.cover_image_url} alt={post.title} fill className="object-cover" />
+            <Image src={post.cover_image_url} alt={post.title} fill sizes="(max-width: 896px) 100vw, 896px" priority className="object-cover" />
           </div>
         )}
 
