@@ -137,10 +137,10 @@ export function AIChatWidget() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="mb-3 w-80 sm:w-96 max-w-[calc(100vw-3rem)] rounded-2xl border border-border bg-card shadow-2xl shadow-black/40 overflow-hidden"
+            className="mb-3 flex flex-col h-[32rem] max-h-[calc(100vh-11rem)] w-[22rem] sm:w-[27rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-border/50 bg-card shadow-2xl shadow-black/40 overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-primary/10 to-purple/10 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-gradient-to-r from-primary/10 to-purple/10 px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 border border-primary/30">
                   <Bot className="h-4 w-4 text-primary" />
@@ -162,7 +162,7 @@ export function AIChatWidget() {
             </div>
 
             {/* Messages */}
-            <div className="h-72 overflow-y-auto p-3 space-y-3 scrollbar-thin scrollbar-thumb-border">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-border">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -178,7 +178,7 @@ export function AIChatWidget() {
                   )}
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-2xl px-3 py-2 text-xs leading-relaxed",
+                      "max-w-[82%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-tr-sm"
                         : "bg-secondary text-foreground rounded-tl-sm"
@@ -200,7 +200,7 @@ export function AIChatWidget() {
             {/* Input */}
             <form
               onSubmit={sendMessage}
-              className="flex items-center gap-2 border-t border-white/10 p-3"
+              className="flex shrink-0 items-center gap-2 border-t border-border/40 p-3"
             >
               <input
                 ref={inputRef}
@@ -208,7 +208,7 @@ export function AIChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything…"
                 disabled={isLoading}
-                className="flex-1 bg-transparent py-2 text-base text-foreground placeholder:text-muted-foreground outline-none border-none focus:ring-0 disabled:opacity-50"
+                className="flex-1 rounded-lg border border-primary/40 bg-background/40 px-3 py-2 text-base text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/70 disabled:opacity-50"
               />
               <button
                 type="submit"
@@ -232,7 +232,7 @@ export function AIChatWidget() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-full shadow-xl transition-all duration-300",
+          "flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300",
           open
             ? "bg-secondary border border-border text-muted-foreground"
             : "bg-gradient-to-br from-primary to-purple text-white shadow-primary/30"
@@ -248,7 +248,7 @@ export function AIChatWidget() {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <X className="h-5 w-5" />
+              <X className="h-6 w-6" />
             </motion.span>
           ) : (
             <motion.span
@@ -258,7 +258,7 @@ export function AIChatWidget() {
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <Bot className="h-6 w-6" />
+              <Bot className="h-7 w-7" />
             </motion.span>
           )}
         </AnimatePresence>

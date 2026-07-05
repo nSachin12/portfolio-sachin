@@ -19,8 +19,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className="group relative flex flex-col rounded-2xl border border-border/50 bg-card overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+      className="group relative flex cursor-pointer flex-col rounded-2xl border border-border/50 bg-card overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300"
     >
+      {/* Stretched link — makes the whole card clickable while inner links stay usable */}
+      <Link
+        href={`/projects/${project.slug}`}
+        aria-label={`View ${project.title}`}
+        className="absolute inset-0 z-0"
+      />
       {/* Image */}
       <div className="relative h-48 bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10 overflow-hidden">
         {project.image_url ? (
@@ -44,7 +50,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-col flex-1 p-6 gap-3">
+      <div className="pointer-events-none relative z-10 flex flex-col flex-1 p-6 gap-3">
         <div>
           <h3 className="font-semibold text-foreground text-lg leading-tight group-hover:text-primary transition-colors">
             {project.title}
@@ -70,18 +76,16 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
         {/* Links */}
         <div className="flex items-center gap-2 mt-auto pt-2">
-          <Button asChild size="sm" variant="ghost" className="flex-1 text-xs h-8">
-            <Link href={`/projects/${project.slug}`}>
-              View Details
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </Button>
+          <span className="flex flex-1 items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
+            View Details
+            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+          </span>
           {project.github_url && (
             <a
               href={project.github_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
+              className="pointer-events-auto relative z-10 flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
             >
               <Github className="h-4 w-4" />
             </a>
@@ -91,7 +95,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               href={project.live_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
+              className="pointer-events-auto relative z-10 flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
             >
               <ExternalLink className="h-4 w-4" />
             </a>
@@ -109,7 +113,7 @@ export function FeaturedProjects({ projects }: FeaturedProjectsProps) {
   if (!projects.length) return null
 
   return (
-    <section ref={ref} className="py-24 px-4 sm:px-10 lg:px-16 xl:px-28 border-t border-border/40 bg-card/20">
+    <section ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 border-t border-border/40 bg-card/20">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

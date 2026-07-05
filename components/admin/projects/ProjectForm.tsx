@@ -6,7 +6,7 @@ import Image from "next/image"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Save, Loader2, Trash2, Plus, X, ImageIcon } from "lucide-react"
+import { Save, Loader2, Trash2, Plus, X, ImageIcon, Video, Loader } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +19,7 @@ import { compressImage } from "@/lib/utils/image"
 import { projectSchema } from "@/lib/validations"
 import { generateSlug } from "@/lib/utils/format"
 import { splitTags } from "@/lib/utils/tags"
-import type { Project } from "@/lib/types"
+import type { Project, ProjectScreenshot } from "@/lib/types"
 import type { z } from "zod"
 
 type FormValues = z.input<typeof projectSchema>
@@ -33,7 +33,10 @@ export function ProjectForm({ project }: ProjectFormProps) {
   const [isPending, startTransition] = useTransition()
   const [techInput, setTechInput] = useState("")
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [galleryUploading, setGalleryUploading] = useState(false)
+  const [galleryUrl, setGalleryUrl] = useState("")
   const isEditing = !!project
 
   const {
@@ -54,6 +57,8 @@ export function ProjectForm({ project }: ProjectFormProps) {
       architecture: project?.architecture ?? "",
       results: project?.results ?? "",
       image_url: project?.image_url ?? "",
+      video_url: project?.video_url ?? "",
+      screenshots: project?.screenshots ?? [],
       category: project?.category ?? "",
       technologies: project?.technologies ?? [],
       github_url: project?.github_url ?? "",
@@ -69,6 +74,7 @@ export function ProjectForm({ project }: ProjectFormProps) {
   const published = watch("published")
   const imageUrlValue = watch("image_url")
   const imagePreview = filePreview ?? (imageUrlValue || null)
+  const screenshots = watch("screenshots") ?? []
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newTitle = e.target.value
@@ -95,47 +101,92 @@ export function ProjectForm({ project }: ProjectFormProps) {
     setFilePreview(file ? URL.createObjectURL(file) : null)
   }
 
+  /**
+   * Compress an image in the browser and upload it straight to Supabase
+   * Storage, returning its public URL. Uploading client-side bypasses the
+   * Server Action body-size limit and keeps stored files small & fast.
+   * Returns null (and toasts) on any validation/upload failure.
+   */
+  async function uploadImageFile(file: File, suffix = ""): Promise<string | null> {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed.")
+      return null
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image is too large (max 10MB).")
+      return null
+    }
+
+    const optimized = await compressImage(file, { maxDimension: 1600, quality: 0.85 })
+    const supabase = createClient()
+    const safeName = optimized.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+    const path = `${Date.now()}${suffix}-${safeName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from("project-images")
+      .upload(path, optimized, { contentType: optimized.type, upsert: false })
+
+    if (uploadError) {
+      toast.error(`Upload failed: ${uploadError.message}`)
+      return null
+    }
+
+    const { data: pub } = supabase.storage.from("project-images").getPublicUrl(path)
+    return pub.publicUrl
+  }
+
+  async function handleGalleryFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
+    setGalleryUploading(true)
+    const added: ProjectScreenshot[] = []
+    for (let i = 0; i < files.length; i++) {
+      const url = await uploadImageFile(files[i], `-${i}`)
+      if (url) added.push({ url })
+    }
+    if (added.length > 0) {
+      setValue("screenshots", [...screenshots, ...added])
+      toast.success(`${added.length} image${added.length > 1 ? "s" : ""} added`)
+    }
+    setGalleryUploading(false)
+    if (galleryInputRef.current) galleryInputRef.current.value = ""
+  }
+
+  function addGalleryUrl() {
+    const url = galleryUrl.trim()
+    if (!url) return
+    setValue("screenshots", [...screenshots, { url }])
+    setGalleryUrl("")
+  }
+
+  function removeScreenshot(index: number) {
+    setValue("screenshots", screenshots.filter((_, i) => i !== index))
+  }
+
+  function setScreenshotCaption(index: number, caption: string) {
+    setValue(
+      "screenshots",
+      screenshots.map((s, i) => (i === index ? { ...s, caption } : s)),
+    )
+  }
+
   function onSubmit(data: FormValues) {
     const imageFile = imageInputRef.current?.files?.[0] ?? null
 
     startTransition(async () => {
       let imageUrl = data.image_url || null
 
-      // Upload the chosen file straight from the browser to Supabase Storage.
-      // This bypasses the Server Action body-size limit and supports large images.
       if (imageFile) {
-        if (!imageFile.type.startsWith("image/")) {
-          toast.error("Only image files are allowed.")
-          return
-        }
-        if (imageFile.size > 10 * 1024 * 1024) {
-          toast.error("Image is too large (max 10MB).")
-          return
-        }
-
-        // Resize/compress in the browser so stored files stay small & fast.
-        const optimized = await compressImage(imageFile, { maxDimension: 1600, quality: 0.85 })
-
-        const supabase = createClient()
-        const safeName = optimized.name.replace(/[^a-zA-Z0-9._-]/g, "_")
-        const path = `${Date.now()}-${safeName}`
-
-        const { error: uploadError } = await supabase.storage
-          .from("project-images")
-          .upload(path, optimized, { contentType: optimized.type, upsert: false })
-
-        if (uploadError) {
-          toast.error(`Upload failed: ${uploadError.message}`)
-          return
-        }
-
-        const { data: pub } = supabase.storage.from("project-images").getPublicUrl(path)
-        imageUrl = pub.publicUrl
+        const uploaded = await uploadImageFile(imageFile)
+        if (!uploaded) return
+        imageUrl = uploaded
       }
 
       const payload = {
         ...data,
         image_url: imageUrl ?? "",
+        video_url: data.video_url || "",
+        screenshots: data.screenshots ?? [],
         technologies: data.technologies ?? [],
         featured: data.featured ?? false,
         published: data.published ?? true,
@@ -251,6 +302,22 @@ export function ProjectForm({ project }: ProjectFormProps) {
             <Label htmlFor="live_url">Live URL</Label>
             <Input id="live_url" placeholder="https://…" {...register("live_url")} />
           </div>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="video_url" className="flex items-center gap-1.5">
+              <Video className="h-4 w-4 text-primary" />
+              Video URL <span className="text-muted-foreground font-normal">(optional)</span>
+            </Label>
+            <Input
+              id="video_url"
+              placeholder="https://youtube.com/watch?v=…  ·  Vimeo  ·  or a direct .mp4 link"
+              {...register("video_url")}
+            />
+            {errors.video_url && <p className="text-xs text-destructive">{errors.video_url.message}</p>}
+            <p className="text-xs text-muted-foreground">
+              Paste a public YouTube or Vimeo link (or a direct video file). It shows with a play button on the project page.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -280,6 +347,74 @@ export function ProjectForm({ project }: ProjectFormProps) {
                 >
                   <X className="h-3 w-3" />
                 </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Gallery images */}
+      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div>
+          <h2 className="font-semibold text-foreground">Gallery Images (Optional)</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Extra screenshots shown on the project page. Upload from your device or paste image URLs.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label
+            htmlFor="gallery_files"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            {galleryUploading ? <Loader className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {galleryUploading ? "Uploading…" : "Add images from device"}
+          </label>
+          <input
+            ref={galleryInputRef}
+            id="gallery_files"
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            disabled={galleryUploading}
+            onChange={handleGalleryFiles}
+          />
+          <div className="flex flex-1 min-w-[220px] gap-2">
+            <Input
+              placeholder="…or paste an image URL"
+              value={galleryUrl}
+              onChange={(e) => setGalleryUrl(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGalleryUrl() } }}
+            />
+            <Button type="button" variant="outline" size="sm" onClick={addGalleryUrl}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {screenshots.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {screenshots.map((shot, i) => (
+              <div key={`${shot.url}-${i}`} className="flex gap-3 rounded-xl border border-border bg-background/40 p-3">
+                <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border border-border bg-card">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={shot.url} alt={shot.caption ?? `Screenshot ${i + 1}`} className="h-full w-full object-cover" />
+                </div>
+                <div className="flex flex-1 flex-col gap-2">
+                  <Input
+                    placeholder="Caption (optional)"
+                    value={shot.caption ?? ""}
+                    onChange={(e) => setScreenshotCaption(i, e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeScreenshot(i)}
+                    className="inline-flex items-center gap-1 self-start text-xs text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -325,6 +460,9 @@ export function ProjectForm({ project }: ProjectFormProps) {
           </div>
           <Switch checked={featured} onCheckedChange={(v) => setValue("featured", v)} />
         </div>
+        <p className="border-t border-border pt-4 text-xs text-muted-foreground">
+          Tip: control the order projects appear in from the Projects list — open a project&apos;s ⋯ menu and choose <span className="text-foreground">Pin</span>.
+        </p>
       </div>
 
       {/* Actions */}

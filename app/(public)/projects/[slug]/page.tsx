@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ArrowLeft, ExternalLink, Github, Layers } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ProjectVideo } from "@/components/public/projects/ProjectVideo"
 import { getProjectBySlug } from "@/lib/actions/projects"
 
 interface Props {
@@ -79,13 +80,19 @@ export default async function ProjectPage({ params }: Props) {
           )}
         </div>
 
-        {/* Cover image */}
-        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10 mb-10">
-          {project.image_url ? (
-            <Image src={project.image_url} alt={project.title} fill sizes="(max-width: 896px) 100vw, 896px" priority className="object-cover" />
+        {/* Hero media — video (with play button) if provided, otherwise the cover image */}
+        <div className="mb-10">
+          {project.video_url ? (
+            <ProjectVideo url={project.video_url} poster={project.image_url} title={project.title} />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Layers className="h-16 w-16 text-muted-foreground/30" />
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-purple/10 to-cyan/10">
+              {project.image_url ? (
+                <Image src={project.image_url} alt={project.title} fill sizes="(max-width: 896px) 100vw, 896px" priority className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Layers className="h-16 w-16 text-muted-foreground/30" />
+                </div>
+              )}
             </div>
           )}
         </div>

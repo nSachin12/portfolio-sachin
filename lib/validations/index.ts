@@ -27,6 +27,10 @@ export const projectSchema = z.object({
   architecture: z.string().max(2000).optional(),
   results: z.string().max(2000).optional(),
   image_url: z.string().url().optional().or(z.literal("")),
+  video_url: z.string().url().optional().or(z.literal("")),
+  screenshots: z
+    .array(z.object({ url: z.string().url(), caption: z.string().max(300).optional() }))
+    .default([]),
   category: z.string().max(100).optional(),
   technologies: z.array(z.string()).default([]),
   github_url: z.string().url().optional().or(z.literal("")),

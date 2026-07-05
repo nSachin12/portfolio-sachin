@@ -29,7 +29,7 @@ export function TestimonialsPreview({ testimonials }: TestimonialsPreviewProps) 
   const items = testimonials.slice(0, 3)
 
   return (
-    <section ref={ref} className="py-24 px-4 sm:px-10 lg:px-16 xl:px-28 border-t border-border/40 bg-card/20">
+    <section ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 border-t border-border/40 bg-card/20">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -11,7 +11,7 @@ export function CTASection() {
   const inView = useInView(ref, { once: true, margin: "-100px" })
 
   return (
-    <section ref={ref} className="py-28 px-4 sm:px-10 lg:px-16 xl:px-28 border-t border-border/40">
+    <section ref={ref} className="py-28 px-4 sm:px-6 lg:px-8 border-t border-border/40">
       <div className="mx-auto max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

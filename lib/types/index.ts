@@ -35,6 +35,7 @@ export interface Project {
   architecture: string | null
   results: string | null
   image_url: string | null
+  video_url: string | null
   screenshots: ProjectScreenshot[]
   category: string | null
   technologies: string[]
@@ -42,7 +43,7 @@ export interface Project {
   live_url: string | null
   featured: boolean
   published: boolean
-  order_index: number
+  order_index: number | null
   created_at: string
   updated_at: string
 }

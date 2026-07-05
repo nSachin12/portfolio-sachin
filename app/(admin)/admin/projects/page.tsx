@@ -3,7 +3,8 @@ import Image from "next/image"
 import { getAllProjectsAdmin } from "@/lib/actions/projects"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Plus, ExternalLink, Github, Pencil, Layers } from "lucide-react"
+import { ProjectRowActions } from "@/components/admin/projects/ProjectRowActions"
+import { Plus, ExternalLink, Github, Pin, Layers } from "lucide-react"
 
 export const metadata = { title: "Projects | Admin" }
 export const dynamic = "force-dynamic"
@@ -51,6 +52,12 @@ export default async function AdminProjectsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
+                  {project.order_index != null && (
+                    <Badge variant="purple" className="text-xs gap-1">
+                      <Pin className="h-3 w-3" />
+                      {project.order_index}
+                    </Badge>
+                  )}
                   <p className="font-medium text-foreground text-sm truncate">{project.title}</p>
                   {project.featured && <Badge variant="blue" className="text-xs">Featured</Badge>}
                   {!project.published && <Badge variant="glass" className="text-xs">Draft</Badge>}
@@ -78,11 +85,7 @@ export default async function AdminProjectsPage() {
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 )}
-                <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                  <Link href={`/admin/projects/${project.id}`}>
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                </Button>
+                <ProjectRowActions id={project.id} title={project.title} order={project.order_index} />
               </div>
             </div>
           ))}

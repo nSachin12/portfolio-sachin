@@ -39,7 +39,7 @@ export default async function AboutPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-10 lg:px-16 xl:px-20 pt-24 pb-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-24 pb-20">
         <div className="text-center mb-16">
           <p className="text-sm font-medium text-primary uppercase tracking-widest mb-3">About Me</p>
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">

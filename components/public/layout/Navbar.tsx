@@ -42,7 +42,7 @@ export function Navbar() {
           scrolled && "shadow-lg shadow-black/20"
         )}
       >
-        <nav className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-10 lg:px-16">
+        <nav className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
           {/* Logo — navigates home; rapid clicks still trigger admin modal */}
           <Link
             href="/"

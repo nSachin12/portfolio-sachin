@@ -29,7 +29,7 @@ export default async function Footer() {
 
   return (
     <footer className="border-t border-border/50 bg-card/30">
-      <div className="mx-auto max-w-7xl px-4 sm:px-10 lg:px-16 xl:px-24 pt-16 pb-28 sm:pb-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 pb-28 sm:pb-16">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-16">
           {/* Brand */}
           <div className="sm:col-span-2 space-y-5">

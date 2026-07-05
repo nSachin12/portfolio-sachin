@@ -46,7 +46,8 @@ export async function getFeaturedProjects(): Promise<Project[]> {
     .select("*")
     .eq("published", true)
     .eq("featured", true)
-    .order("order_index")
+    .order("order_index", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
     .limit(6)
   return data ?? []
 }
@@ -59,7 +60,8 @@ export async function getProjects(params: Partial<PaginationParams> & { category
     .from("projects")
     .select("*", { count: "exact" })
     .eq("published", true)
-    .order("order_index")
+    .order("order_index", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
 
   if (category) query = query.eq("category", category)
 
@@ -90,8 +92,24 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
 
 export async function getAllProjectsAdmin(): Promise<Project[]> {
   const supabase = await createServiceClient()
-  const { data } = await supabase.from("projects").select("*").order("order_index")
+  const { data } = await supabase
+    .from("projects")
+    .select("*")
+    .order("order_index", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
   return data ?? []
+}
+
+/** Pin a project to a position (lower shows first) or unpin it with `null`. */
+export async function setProjectOrder(id: string, order: number | null): Promise<ActionResult<null>> {
+  const supabase = await createServiceClient()
+  const value = order === null || Number.isNaN(order) ? null : Math.max(0, Math.trunc(order))
+  const { error } = await supabase.from("projects").update({ order_index: value }).eq("id", id)
+  if (error) return { success: false, error: error.message }
+  revalidatePath("/projects")
+  revalidatePath("/admin/projects")
+  revalidatePath("/")
+  return { success: true, data: null }
 }
 
 export async function createProject(payload: z.infer<typeof projectSchema>): Promise<ActionResult<Project>> {

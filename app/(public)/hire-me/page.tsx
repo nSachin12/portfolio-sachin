@@ -29,7 +29,7 @@ const services = [
 export default function HireMePage() {
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-10 lg:px-16 xl:px-20 pt-24 pb-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-24 pb-20">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-sm font-medium text-primary uppercase tracking-widest mb-3">Work With Me</p>
