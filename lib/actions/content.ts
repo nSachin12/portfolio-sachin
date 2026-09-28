@@ -94,6 +94,39 @@ export async function deleteExperience(id: string): Promise<ActionResult<null>> 
   return { success: true, data: null }
 }
 
+export async function moveExperience(id: string, direction: "up" | "down"): Promise<ActionResult<null>> {
+  const supabase = await createServiceClient()
+  const { data: experiences, error: listError } = await supabase
+    .from("experience")
+    .select("id")
+    .order("order_index")
+
+  if (listError) return { success: false, error: listError.message }
+  const orderedIds = (experiences ?? []).map((experience) => experience.id)
+  const currentIndex = orderedIds.indexOf(id)
+  const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= orderedIds.length) {
+    return { success: false, error: "Experience order could not be updated." }
+  }
+
+  orderedIds.splice(currentIndex, 1)
+  orderedIds.splice(nextIndex, 0, id)
+
+  const updates = await Promise.all(
+    orderedIds.map((experienceId, order_index) =>
+      supabase.from("experience").update({ order_index }).eq("id", experienceId)
+    )
+  )
+  const updateError = updates.find((result) => result.error)?.error
+  if (updateError) return { success: false, error: updateError.message }
+
+  revalidatePath("/experience")
+  revalidatePath("/resume")
+  revalidatePath("/admin/experience")
+  return { success: true, data: null }
+}
+
 // ── Certifications ───────────────────────────────────────────────────────────
 
 export async function getCertifications(): Promise<Certification[]> {

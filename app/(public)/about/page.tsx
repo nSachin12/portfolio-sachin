@@ -1,12 +1,14 @@
 import type { Metadata } from "next"
 import Image from "next/image"
-import { MapPin, Zap, Users, Code2, Brain } from "lucide-react"
+import { MapPin, Workflow, Users, Code2, Cpu } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getProfile } from "@/lib/actions/profile"
 import { getSkills } from "@/lib/actions/content"
 import { getProjects } from "@/lib/actions/projects"
 import { siteConfig } from "@/config/site"
 import { formatExperienceValue } from "@/lib/utils/format"
+import { getSettings } from "@/lib/actions/settings"
+import { getAvailabilityLabel, getAvailabilityStatus } from "@/lib/utils/availability"
 
 export const metadata: Metadata = {
   title: "About",
@@ -16,20 +18,22 @@ export const metadata: Metadata = {
 export const revalidate = 3600
 
 const highlights = [
-  { icon: Brain, label: "AI Specialist", desc: "LLMs, RAG, fine-tuning, agentic systems" },
+  { icon: Cpu, label: "AI Specialist", desc: "LLMs, RAG, fine-tuning, agentic systems" },
   { icon: Code2, label: "Full-Stack", desc: "Next.js, FastAPI, Supabase, Postgres" },
-  { icon: Zap, label: "Automation", desc: "n8n, Make.com, workflow orchestration" },
+  { icon: Workflow, label: "Automation", desc: "n8n, Make.com, workflow orchestration" },
   { icon: Users, label: "Client-Focused", desc: "Clear comms, on-time delivery" },
 ]
 
 export default async function AboutPage() {
-  const [profile, skills, projectsResult] = await Promise.all([
+  const [profile, skills, projectsResult, settings] = await Promise.all([
     getProfile(),
     getSkills(),
     getProjects({ page: 1, limit: 1 }),
+    getSettings(),
   ])
   const projectCount = projectsResult.total
   const skillsCount = skills.length
+  const availability = getAvailabilityStatus(settings.availability_status)
 
   const skillsByCategory = skills.reduce<Record<string, typeof skills>>((acc, s) => {
     if (!acc[s.category]) acc[s.category] = []
@@ -93,12 +97,9 @@ export default async function AboutPage() {
               </div>
               <div className="rounded-xl border border-border bg-card/50 p-4 text-center">
                 <div className="flex items-center justify-center gap-1 mt-1">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                  </span>
+                  <span className={`h-2 w-2 rounded-full ${availability === "not_available" ? "bg-muted-foreground" : "bg-emerald-400"}`} />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Available</p>
+                <p className="text-xs text-muted-foreground mt-1">{getAvailabilityLabel(availability)}</p>
               </div>
             </div>
           </div>

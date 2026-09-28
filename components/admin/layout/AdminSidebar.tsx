@@ -15,11 +15,12 @@ import {
   Settings,
   User,
   LogOut,
-  Zap,
   Trophy,
   BookOpen,
   FileBadge,
   X,
+  Code2,
+  Wrench,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { signOut } from "@/lib/actions/auth"
@@ -29,7 +30,7 @@ const navItems = [
   { label: "Projects", href: "/admin/projects", icon: FolderGit2 },
   { label: "Blog", href: "/admin/blog", icon: BookOpen },
   { label: "Experience", href: "/admin/experience", icon: Briefcase },
-  { label: "Skills", href: "/admin/skills", icon: Zap },
+  { label: "Skills", href: "/admin/skills", icon: Wrench },
   { label: "Certifications", href: "/admin/certifications", icon: Award },
   { label: "Achievements", href: "/admin/achievements", icon: Trophy },
   { label: "Testimonials", href: "/admin/testimonials", icon: Star },
@@ -68,7 +69,7 @@ export function AdminSidebar({ open = false, onClose }: AdminSidebarProps) {
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-            <Zap className="h-4 w-4 text-primary" />
+            <Code2 className="h-4 w-4 text-primary" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-bold text-foreground">Admin Panel</p>

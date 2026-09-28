@@ -3,17 +3,19 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRight, ChevronDown, Download, MapPin, Sparkles, Zap } from "lucide-react"
+import { ArrowRight, BriefcaseBusiness, ChevronDown, Download, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { Profile } from "@/lib/types"
 import { formatExperienceValue } from "@/lib/utils/format"
+import { getAvailabilityLabel, type AvailabilityStatus } from "@/lib/utils/availability"
 
 interface HeroSectionProps {
   profile: Profile | null
   projectCount?: number
   skillCount?: number
+  availabilityStatus: AvailabilityStatus
 }
 
 const roles = [
@@ -29,7 +31,7 @@ function getDisplayName(fullName?: string | null) {
   return parts[parts.length - 1]
 }
 
-export function HeroSection({ profile, projectCount = 0, skillCount = 0 }: HeroSectionProps) {
+export function HeroSection({ profile, projectCount = 0, skillCount = 0, availabilityStatus }: HeroSectionProps) {
   const roleRef = useRef<HTMLSpanElement>(null)
   const roleIndex = useRef(0)
   const charIndex = useRef(0)
@@ -105,16 +107,9 @@ export function HeroSection({ profile, projectCount = 0, skillCount = 0 }: HeroS
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
           {/* Availability badge */}
           <motion.div variants={item} className="flex justify-center">
-            <Badge variant="green" className="gap-1.5 py-1 px-3 text-xs">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              {profile?.availability === "available"
-                ? "Available for new opportunities"
-                : profile?.availability === "busy"
-                ? "Currently focused on a project"
-                : "Open to opportunities"}
+            <Badge variant={availabilityStatus === "not_available" ? "glass" : "green"} className="gap-1.5 py-1 px-3 text-xs">
+              <span className={cn("h-2 w-2 rounded-full", availabilityStatus === "not_available" ? "bg-muted-foreground" : "bg-emerald-500")} />
+              {getAvailabilityLabel(availabilityStatus)}
             </Badge>
           </motion.div>
 
@@ -180,7 +175,7 @@ export function HeroSection({ profile, projectCount = 0, skillCount = 0 }: HeroS
             </Button>
             <Button asChild size="lg" variant="glass" className="gap-2">
               <Link href="/hire-me">
-                <Sparkles className="h-4 w-4" />
+                <BriefcaseBusiness className="h-4 w-4" />
                 Hire Me
               </Link>
             </Button>

@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import { Star, Linkedin } from "lucide-react"
 import { getTestimonials } from "@/lib/actions/content"
+import { getSettings } from "@/lib/actions/settings"
+import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Testimonials",
@@ -11,6 +13,8 @@ export const metadata: Metadata = {
 export const revalidate = 3600
 
 export default async function TestimonialsPage() {
+  const settings = await getSettings()
+  if (settings.show_testimonials === "false") notFound()
   const testimonials = await getTestimonials(true)
 
   const avgRating =

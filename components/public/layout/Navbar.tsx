@@ -4,12 +4,13 @@ import { useState, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Zap } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { Button } from "@/components/ui/button"
 import { AdminLoginModal } from "@/components/modals/AdminLoginModal"
 import { useAdminTrigger } from "@/hooks/useAdminTrigger"
 import { useScrolled } from "@/hooks/useScrolled"
+import { BrandAvatar } from "@/components/public/layout/BrandAvatar"
 
 const navLinks = [
   { label: "About", href: "/about", activeClass: "text-blue-400", hoverClass: "hover:text-blue-400" },
@@ -21,11 +22,12 @@ const navLinks = [
   { label: "Contact", href: "/contact", activeClass: "text-pink-400", hoverClass: "hover:text-pink-400" },
 ]
 
-export function Navbar() {
+export function Navbar({ showBlog = true, avatarUrl }: { showBlog?: boolean; avatarUrl?: string | null }) {
   const pathname = usePathname()
   const scrolled = useScrolled(20)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [adminModalOpen, setAdminModalOpen] = useState(false)
+  const visibleNavLinks = showBlog ? navLinks : navLinks.filter((link) => link.href !== "/blog")
 
   const openAdminModal = useCallback(() => setAdminModalOpen(true), [])
   const { handleLogoClick } = useAdminTrigger({ onTrigger: openAdminModal })
@@ -50,9 +52,7 @@ export function Navbar() {
             className="flex items-center gap-2 group shrink-0 focus:outline-none"
             aria-label="Home"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-              <Zap className="h-4 w-4 text-primary" />
-            </div>
+            <BrandAvatar avatarUrl={avatarUrl} />
             <span className="font-bold text-foreground tracking-tight whitespace-nowrap">
               Nadimidoddi <span className="text-primary">Sachin</span>
             </span>
@@ -60,7 +60,7 @@ export function Navbar() {
 
           {/* Desktop nav — stretches to fill the available space, links evenly distributed */}
           <div className="hidden md:flex flex-1 items-center justify-evenly px-4 lg:px-8">
-            {navLinks.map((link) => {
+            {visibleNavLinks.map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(link.href + "/")
               return (
                 <Link
@@ -112,7 +112,7 @@ export function Navbar() {
               className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl"
             >
               <div className="px-4 py-4 space-y-1">
-                {navLinks.map((link) => {
+                {visibleNavLinks.map((link) => {
                   const isActive = pathname === link.href
                   return (
                     <Link

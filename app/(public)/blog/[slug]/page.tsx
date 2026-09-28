@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Clock, ArrowLeft, Calendar } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getBlogBySlug } from "@/lib/actions/blog"
+import { getSettings } from "@/lib/actions/settings"
 import { formatDate } from "@/lib/utils/format"
 import { siteConfig } from "@/config/site"
 
@@ -30,6 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
+  const settings = await getSettings()
+  if (settings.show_blog === "false") notFound()
   const { slug } = await params
   const post = await getBlogBySlug(slug)
   if (!post) notFound()

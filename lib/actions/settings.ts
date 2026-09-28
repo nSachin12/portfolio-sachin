@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
 import type { Setting, ActionResult } from "@/lib/types"
 
 export async function getSettings(): Promise<Record<string, string>> {
@@ -26,6 +27,7 @@ export async function updateSetting(key: string, value: string): Promise<ActionR
     .single()
 
   if (error) return { success: false, error: error.message }
+  revalidatePath("/", "layout")
   return { success: true, data }
 }
 

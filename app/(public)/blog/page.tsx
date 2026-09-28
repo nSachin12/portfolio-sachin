@@ -4,7 +4,9 @@ import Image from "next/image"
 import { Clock, ArrowRight, FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getPublishedBlogs } from "@/lib/actions/blog"
+import { getSettings } from "@/lib/actions/settings"
 import { formatDate } from "@/lib/utils/format"
+import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -13,6 +15,8 @@ export const metadata: Metadata = {
 export const revalidate = 3600
 
 export default async function BlogPage() {
+  const settings = await getSettings()
+  if (settings.show_blog === "false") notFound()
   const { data: posts } = await getPublishedBlogs({ page: 1, limit: 24 })
 
   return (

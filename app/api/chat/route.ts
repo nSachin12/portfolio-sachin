@@ -5,7 +5,7 @@ import { formatExperienceDuration, formatDateShort } from "@/lib/utils/format"
 export const runtime = "edge"
 
 interface ChatMessage {
-  role: "user" | "assistant" | "system"
+  role: "user" | "assistant"
   content: string
 }
 
@@ -43,235 +43,9 @@ type PortfolioContext = {
   resume: { file_url: string; file_name: string; version: string | null } | null
 }
 
-function getLatestUserMessage(messages: ChatMessage[]) {
-  return [...messages].reverse().find((message) => message.role === "user")?.content ?? ""
-}
-
-// ---- Typo-tolerant intent matching --------------------------------------
-// Visitors make typos, and the small LLM hangs/loops on ambiguous input.
-// So we resolve the intended topic ourselves with edit-distance matching and
-// answer from the SPECIFIC page's data — never bleeding across pages.
-
-function editDistance(a: string, b: string): number {
-  const m = a.length
-  const n = b.length
-  if (m === 0) return n
-  if (n === 0) return m
-
-  let prev = Array.from({ length: n + 1 }, (_, i) => i)
-  let curr = new Array<number>(n + 1).fill(0)
-
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1
-      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
-    }
-    const tmp = prev
-    prev = curr
-    curr = tmp
-  }
-  return prev[n]
-}
-
-function tokenize(text: string): string[] {
-  return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean)
-}
-
-// A token matches a keyword if it's equal, a near-complete stem of it
-// (e.g. "project" ↔ "projects"), or a close typo. Stem and typo checks
-// require length proximity so short words like "what" can't collide with
-// longer keywords like "whatsapp".
-function tokenMatches(token: string, keyword: string): boolean {
-  if (token === keyword) return true
-
-  // Stem / plural: one is contained in the other AND they're nearly the same
-  // length (so "whatsapp".includes("what") is rejected — diff of 4).
-  if (
-    token.length >= 4 &&
-    keyword.length >= 4 &&
-    Math.abs(token.length - keyword.length) <= 2 &&
-    (token.includes(keyword) || keyword.includes(token))
-  ) {
-    return true
-  }
-
-  // Typo tolerance: only for longer tokens to avoid stopword collisions.
-  if (token.length >= 5 && Math.abs(token.length - keyword.length) <= 2) {
-    const threshold = token.length >= 8 ? 2 : 1
-    return editDistance(token, keyword) <= threshold
-  }
-
-  return false
-}
-
-// Intent definitions, ordered by tie-break priority (earlier wins ties).
-// More specific topics (links, content pages) come before generic contact
-// and the catch-all "about", so e.g. "about his projects" → projects.
-const INTENTS: Array<{ key: string; keywords: string[] }> = [
-  { key: "resume", keywords: ["resume", "resumes", "cv", "curriculum"] },
-  { key: "github", keywords: ["github"] },
-  { key: "linkedin", keywords: ["linkedin"] },
-  { key: "twitter", keywords: ["twitter", "tweet"] },
-  { key: "website", keywords: ["website", "webpage"] },
-  { key: "email", keywords: ["email", "mail", "gmail"] },
-  { key: "phone", keywords: ["phone", "mobile", "whatsapp", "telephone", "call"] },
-  { key: "skills", keywords: ["skill", "skills", "skillset", "tech", "technology", "technologies", "stack", "expertise", "tools", "toolset"] },
-  { key: "experience", keywords: ["experience", "experiences", "job", "jobs", "career", "employment", "work", "worked", "working", "company", "companies", "role", "roles", "position", "positions"] },
-  { key: "projects", keywords: ["project", "projects", "portfolio", "apps", "built", "casestudy"] },
-  { key: "certifications", keywords: ["certification", "certifications", "certificate", "certificates", "certified", "credential", "credentials", "course", "courses"] },
-  { key: "achievements", keywords: ["achievement", "achievements", "award", "awards", "recognition", "accomplishment", "accomplishments", "honor", "honour"] },
-  { key: "testimonials", keywords: ["testimonial", "testimonials", "review", "reviews", "feedback", "recommendation", "recommendations", "recommend", "reference", "references", "client", "clients"] },
-  { key: "blog", keywords: ["blog", "blogs", "article", "articles", "post", "posts", "writing", "writes", "wrote"] },
-  { key: "availability", keywords: ["available", "availability", "hire", "hiring", "freelance", "freelancing", "opportunity", "opportunities"] },
-  { key: "contact", keywords: ["contact", "reach", "connect", "message", "social", "socials", "detail", "details", "info", "information"] },
-  { key: "about", keywords: ["about", "bio", "biography", "background", "summary", "introduce", "introduction", "yourself", "who"] },
-]
-
-// Score every intent and return the best-matching one (highest keyword count),
-// or null when nothing matches (then the LLM handles the open-ended question).
-function classifyIntent(text: string): string | null {
-  const tokens = tokenize(text)
-  let best: string | null = null
-  let bestScore = 0
-
-  for (const { key, keywords } of INTENTS) {
-    let score = 0
-    for (const kw of keywords) {
-      if (tokens.some((tok) => tokenMatches(tok, kw))) score++
-    }
-    if (score > bestScore) {
-      bestScore = score
-      best = key
-    }
-  }
-
-  return bestScore > 0 ? best : null
-}
-
 function truncate(value: string, max: number): string {
   const clean = value.replace(/\s+/g, " ").trim()
   return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean
-}
-
-// Pick a random variant so answers feel fresh and conversational instead of
-// returning the exact same string every time for a given intent.
-function pick<T>(variants: T[]): T {
-  return variants[Math.floor(Math.random() * variants.length)]
-}
-
-// Friendly, varied "not available" message: states it's unavailable, then
-// invites the visitor to reach out to Sachin for clarity, then the link.
-function notAvailableMessage(subject: string, contactPage: string): string {
-  return pick([
-    `Currently, there's no information on ${subject} here. If you'd like more clarity, feel free to reach out to Sachin: ${contactPage}`,
-    `Right now, I don't have any details on ${subject} to share. For more clarity, you can connect with Sachin directly: ${contactPage}`,
-    `It looks like there's nothing on ${subject} yet. Reach out to Sachin and he'll be glad to help: ${contactPage}`,
-    `Hmm, I couldn't find anything on ${subject} here. If you want clarity, feel free to contact Sachin: ${contactPage}`,
-  ])
-}
-
-// Determine the user's intent first, then fetch ONLY that topic's data.
-// Returns a ready-to-send answer, or null when the message is open-ended
-// (then we let the model handle it).
-function routeAnswer(text: string, ctx: PortfolioContext, siteUrl: string): string | null {
-  const intent = classifyIntent(text)
-  if (!intent) return null
-
-  const profile = ctx.profile
-  const contactPage = new URL("/contact", siteUrl).toString()
-  const notAvailable = (subject: string) => notAvailableMessage(subject, contactPage)
-
-  switch (intent) {
-    case "resume": {
-      const resumePageUrl = new URL("/resume", siteUrl).toString()
-      if (!ctx.resume?.file_url) return notAvailable("his resume")
-      return pick([
-        `Sure! You can view Sachin's resume right here on the site — head to the Resume page (${resumePageUrl}) and tap "View PDF" or "Download PDF". 📄`,
-        `Absolutely — Sachin's resume is on the Resume page (${resumePageUrl}). Just hit "View PDF" or "Download PDF" to open it. 📄`,
-        `You can find Sachin's resume on the Resume page: ${resumePageUrl}. Use the "View PDF" or "Download PDF" button there. 📄`,
-      ])
-    }
-
-    case "github":
-      return profile?.github_url
-        ? pick([
-            `Here's Sachin's GitHub: ${profile.github_url} 🐙`,
-            `You can find Sachin on GitHub here: ${profile.github_url} 🐙`,
-            `Sachin's GitHub profile: ${profile.github_url} 🐙`,
-          ])
-        : notAvailable("his GitHub link")
-
-    case "linkedin":
-      return profile?.linkedin_url
-        ? pick([
-            `Here's Sachin's LinkedIn: ${profile.linkedin_url} 💼`,
-            `You can connect with Sachin on LinkedIn here: ${profile.linkedin_url} 💼`,
-            `Sachin's LinkedIn profile: ${profile.linkedin_url} 💼`,
-          ])
-        : notAvailable("his LinkedIn profile")
-
-    case "twitter":
-      return profile?.twitter_url
-        ? pick([
-            `Here's Sachin's Twitter/X: ${profile.twitter_url}`,
-            `You can follow Sachin on Twitter/X here: ${profile.twitter_url}`,
-          ])
-        : notAvailable("his Twitter/X profile")
-
-    case "website":
-      return profile?.website_url
-        ? pick([
-            `Here's Sachin's website: ${profile.website_url}`,
-            `You can check out Sachin's website here: ${profile.website_url}`,
-          ])
-        : notAvailable("his personal website")
-
-    case "email":
-      return profile?.email
-        ? pick([
-            `You can email Sachin at: ${profile.email} 📧`,
-            `Sachin's email is: ${profile.email} 📧`,
-            `Feel free to reach Sachin by email at: ${profile.email} 📧`,
-          ])
-        : notAvailable("his email address")
-
-    case "phone":
-      return profile?.phone
-        ? pick([
-            `You can reach Sachin by phone at: ${profile.phone} 📞`,
-            `Sachin's phone number is: ${profile.phone} 📞`,
-            `Feel free to call Sachin at: ${profile.phone} 📞`,
-          ])
-        : notAvailable("his phone number")
-
-    case "contact": {
-      const lines: string[] = []
-      if (profile?.email) lines.push(`📧 Email: ${profile.email}`)
-      if (profile?.phone) lines.push(`📞 Phone: ${profile.phone}`)
-      if (profile?.linkedin_url) lines.push(`💼 LinkedIn: ${profile.linkedin_url}`)
-      if (profile?.github_url) lines.push(`🐙 GitHub: ${profile.github_url}`)
-      if (profile?.twitter_url) lines.push(`🐦 Twitter/X: ${profile.twitter_url}`)
-
-      if (lines.length === 0) {
-        return notAvailable("Sachin's direct contact details")
-      }
-      lines.push(`You can also use the contact form here: ${contactPage}`)
-      const intro = pick([
-        "Here's how you can reach Sachin:",
-        "Sure! Here are the best ways to reach Sachin:",
-        "You can connect with Sachin through any of these:",
-        "Here are Sachin's contact details:",
-      ])
-      return `${intro}\n${lines.join("\n")}`
-    }
-
-    // Everything else (skills, projects, experience, "top skill", comparisons,
-    // open-ended chat, etc.) is handled conversationally by the model, which
-    // can reason over the structured DATA in the system prompt.
-    default:
-      return null
-  }
 }
 
 function formatExpRange(start: string, end: string | null, isCurrent: boolean) {
@@ -361,6 +135,9 @@ function buildSystemPrompt(context: PortfolioContext) {
 
 HOW TO TALK:
 - Sound human and conversational — never robotic, never a data dump. Vary your wording naturally.
+- You are Sachin's assistant. If asked who you are, identify yourself as Sachin's assistant and ask how you can help.
+- Answer only questions about Sachin and the professional information in this portfolio. For unrelated requests, explain that you are here to help visitors learn about Sachin using this portfolio's information, and briefly offer the relevant topics you can cover.
+- Do not use emojis or decorative symbols.
 - ANSWER EXACTLY WHAT IS ASKED. If they ask for his "top skill", name the single highest-proficiency skill — don't list them all. If they ask "is he good at Python?", give a direct take from the data. Tailor the answer to the precise question.
 - You MAY reason over the DATA: rank by proficiency, compare, count, pick the most relevant item, summarize. Just don't invent facts that aren't there.
 - Lead with the direct answer in a sentence or two. Use a short bullet list only when the question really calls for a list. Offer a light follow-up when natural ("Want to know about his projects too?").
@@ -373,19 +150,6 @@ STRICT FACTS:
 
 DATA:
 ${contextBlock}`
-}
-
-function streamTextAnswer(text: string) {
-  const encoder = new TextEncoder()
-  const payload = `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n` + `data: [DONE]\n\n`
-
-  return new Response(encoder.encode(payload), {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  })
 }
 
 async function loadPortfolioContext(): Promise<PortfolioContext> {
@@ -410,6 +174,7 @@ async function loadPortfolioContext(): Promise<PortfolioContext> {
 
   const [
     profileResult,
+    availabilityResult,
     skillsResult,
     experiencesResult,
     projectsResult,
@@ -420,6 +185,7 @@ async function loadPortfolioContext(): Promise<PortfolioContext> {
     resumeResult,
   ] = await Promise.all([
     supabase.from("profiles").select("full_name,title,tagline,bio,location,email,phone,availability,years_of_exp,months_of_exp,github_url,linkedin_url,twitter_url,website_url").limit(1).maybeSingle(),
+    supabase.from("settings").select("value").eq("key", "availability_status").maybeSingle(),
     supabase.from("skills").select("name,category,proficiency").order("category").order("proficiency", { ascending: false }),
     supabase.from("experience").select("role,company,description,start_date,end_date,is_current").order("order_index"),
     supabase.from("projects").select("title,description,category").eq("published", true).order("featured", { ascending: false }).order("order_index"),
@@ -431,7 +197,9 @@ async function loadPortfolioContext(): Promise<PortfolioContext> {
   ])
 
   return {
-    profile: profileResult.data ?? null,
+    profile: profileResult.data
+      ? { ...profileResult.data, availability: availabilityResult.data?.value ?? profileResult.data.availability }
+      : null,
     skills: skillsResult.data ?? [],
     experiences: experiencesResult.data ?? [],
     projects: projectsResult.data ?? [],
@@ -445,11 +213,23 @@ async function loadPortfolioContext(): Promise<PortfolioContext> {
 
 export async function POST(request: Request) {
   try {
-    const { messages } = await request.json() as { messages: ChatMessage[] }
+    const body = await request.json() as { messages?: unknown }
 
-    if (!messages || !Array.isArray(messages)) {
+    if (
+      !Array.isArray(body.messages) ||
+      body.messages.length === 0 ||
+      body.messages.some((message: unknown) =>
+        !message ||
+        typeof message !== "object" ||
+        !("role" in message) ||
+        !("content" in message) ||
+        (message.role !== "user" && message.role !== "assistant") ||
+        typeof message.content !== "string"
+      )
+    ) {
       return NextResponse.json({ error: "Invalid messages format" }, { status: 400 })
     }
+    const messages = body.messages as ChatMessage[]
 
     const apiKey = process.env.OPENROUTER_API_KEY
     const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.2-3b-instruct:free"
@@ -459,22 +239,13 @@ export async function POST(request: Request) {
     }
 
     const portfolioContext = await loadPortfolioContext()
-    const latestUserMessage = getLatestUserMessage(messages)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-
-    // Resolve the topic ourselves (typo-tolerant, page-scoped) before ever
-    // touching the LLM. This keeps factual answers reliable and means typos
-    // never cause the model to hang or loop.
-    const directAnswer = routeAnswer(latestUserMessage, portfolioContext, siteUrl)
-    if (directAnswer) {
-      return streamTextAnswer(directAnswer)
-    }
-
     const systemPrompt = buildSystemPrompt(portfolioContext)
 
-    // Hard timeout so a slow/looping free-tier model can never hang the chat.
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 20000)
+    const timeoutId = setTimeout(() => controller.abort("Chat request timed out"), 90000)
+    const abortUpstream = () => controller.abort(request.signal.reason)
+    request.signal.addEventListener("abort", abortUpstream, { once: true })
+    if (request.signal.aborted) abortUpstream()
 
     let response: Response
     try {
@@ -500,22 +271,61 @@ export async function POST(request: Request) {
           stream: true,
         }),
       })
-    } catch {
+    } catch (error) {
       clearTimeout(timeoutId)
-      return streamTextAnswer(
-        `Sorry, that's taking longer than expected on my end. Please try asking again, or reach out via the contact page: ${new URL("/contact", siteUrl).toString()}`,
-      )
+      request.signal.removeEventListener("abort", abortUpstream)
+      if (controller.signal.aborted) {
+        return NextResponse.json(
+          { error: request.signal.aborted ? "Request cancelled" : "Chat request timed out" },
+          { status: request.signal.aborted ? 499 : 504 },
+        )
+      }
+      console.error("Chat provider request failed:", error)
+      return NextResponse.json({ error: "Unable to connect to chat service" }, { status: 502 })
     }
-    clearTimeout(timeoutId)
 
     if (!response.ok) {
+      clearTimeout(timeoutId)
+      request.signal.removeEventListener("abort", abortUpstream)
       const err = await response.text()
       console.error("OpenRouter error:", err)
       return NextResponse.json({ error: "AI service unavailable" }, { status: 502 })
     }
 
-    // Stream the response back
-    return new Response(response.body, {
+    const reader = response.body?.getReader()
+    if (!reader) {
+      clearTimeout(timeoutId)
+      request.signal.removeEventListener("abort", abortUpstream)
+      return NextResponse.json({ error: "Empty response from chat service" }, { status: 502 })
+    }
+
+    const cleanup = () => {
+      clearTimeout(timeoutId)
+      request.signal.removeEventListener("abort", abortUpstream)
+    }
+    const stream = new ReadableStream<Uint8Array>({
+      async pull(streamController) {
+        try {
+          const { done, value } = await reader.read()
+          if (done) {
+            cleanup()
+            streamController.close()
+          } else {
+            streamController.enqueue(value)
+          }
+        } catch (error) {
+          cleanup()
+          streamController.error(error)
+        }
+      },
+      async cancel(reason) {
+        controller.abort(reason)
+        cleanup()
+        await reader.cancel(reason).catch(() => undefined)
+      },
+    })
+
+    return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",

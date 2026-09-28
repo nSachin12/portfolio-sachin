@@ -2,11 +2,11 @@
 
 import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
-import { Brain, Workflow, Code2, GraduationCap } from "lucide-react"
+import { Cpu, Workflow, Code2, GraduationCap } from "lucide-react"
 
 const focusAreas = [
   {
-    icon: Brain,
+    icon: Cpu,
     title: "Generative AI & LLMs",
     description: "Building with generative AI and language models — RAG pipelines, prompting, and practical AI features.",
     color: "text-blue-400",

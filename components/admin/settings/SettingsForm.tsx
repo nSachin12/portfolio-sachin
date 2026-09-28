@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateSetting } from "@/lib/actions/settings"
 import type { Setting } from "@/lib/types"
+import { availabilityOptions, getAvailabilityStatus } from "@/lib/utils/availability"
 
 interface SettingsFormProps {
   settings: Setting[]
@@ -39,8 +41,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     })
   }
 
-  const booleanSettings = settings.filter((s) => s.type === "boolean")
-  const stringSettings = settings.filter((s) => s.type === "string" || s.type === "number")
+  const booleanSettings = settings.filter((s) => s.type === "boolean" && s.key !== "hire_me_available")
+  const stringSettings = settings.filter((s) => (s.type === "string" || s.type === "number") && s.key !== "availability_status")
+  const availability = settings.find((setting) => setting.key === "availability_status")
 
   return (
     <div className="space-y-8">
@@ -70,6 +73,24 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         <div className="rounded-xl border border-border bg-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Site Configuration</h2>
           <div className="space-y-4">
+            {availability && (
+              <div className="space-y-1.5">
+                <Label htmlFor="availability_status">Professional availability</Label>
+                <Select
+                  value={getAvailabilityStatus(values.availability_status)}
+                  onValueChange={(value) => handleChange("availability_status", value)}
+                >
+                  <SelectTrigger id="availability_status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availabilityOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {stringSettings.map((setting) => (
               <div key={setting.key} className="space-y-1.5">
                 <Label htmlFor={setting.key}>{setting.description ?? setting.key}</Label>

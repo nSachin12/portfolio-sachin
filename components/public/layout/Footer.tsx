@@ -1,7 +1,9 @@
 import Link from "next/link"
-import { Github, Linkedin, Zap } from "lucide-react"
+import { Github, Linkedin } from "lucide-react"
 import { siteConfig } from "@/config/site"
 import { getProfile } from "@/lib/actions/profile"
+import { getSettings } from "@/lib/actions/settings"
+import { BrandAvatar } from "@/components/public/layout/BrandAvatar"
 
 const footerLinks = {
   Explore: [
@@ -20,7 +22,9 @@ const footerLinks = {
 }
 
 export default async function Footer() {
-  const profile = await getProfile()
+  const [profile, settings] = await Promise.all([getProfile(), getSettings()])
+  const showBlog = settings.show_blog !== "false"
+  const showTestimonials = settings.show_testimonials !== "false"
 
   const socialLinks = [
     profile?.github_url ? { icon: Github, href: profile.github_url, label: "GitHub" } : null,
@@ -34,9 +38,7 @@ export default async function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 space-y-5">
             <Link href="/" className="flex items-center gap-2 group w-fit">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                <Zap className="h-4 w-4 text-primary" />
-              </div>
+              <BrandAvatar avatarUrl={profile?.avatar_url} />
               <span className="font-bold text-foreground whitespace-nowrap">
                 {profile?.full_name?.trim() || "Nadimidoddi Sachin"}
               </span>
@@ -65,7 +67,10 @@ export default async function Footer() {
             <div key={category}>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground mb-4">{category}</h3>
               <ul className="space-y-3">
-                {links.map((link) => (
+                {links.filter((link) =>
+                  (link.href !== "/blog" || showBlog) &&
+                  (link.href !== "/testimonials" || showTestimonials)
+                ).map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}

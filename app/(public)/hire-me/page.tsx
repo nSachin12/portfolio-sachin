@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
-import { Clock, Code2, Brain, Workflow } from "lucide-react"
+import { Clock, Code2, Workflow } from "lucide-react"
 import { HireMeForm } from "@/components/public/hire/HireMeForm"
+import { getSettings } from "@/lib/actions/settings"
+import { getAvailabilityLabel, getAvailabilityStatus } from "@/lib/utils/availability"
 
 export const metadata: Metadata = {
   title: "Hire Me",
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
 
 const services = [
   {
-    icon: Brain,
+    icon: Code2,
     title: "LLM Integration",
     description: "Integrate GPT-4, Claude, Llama, and other LLMs into your product via RAG, fine-tuning, and custom pipelines.",
   },
@@ -26,7 +28,10 @@ const services = [
   },
 ]
 
-export default function HireMePage() {
+export default async function HireMePage() {
+  const settings = await getSettings()
+  const availability = getAvailabilityStatus(settings.availability_status)
+
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-24 pb-20">
@@ -62,12 +67,16 @@ export default function HireMePage() {
               })}
             </div>
 
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className={`rounded-xl border p-4 ${availability === "not_available" ? "border-border bg-card" : "border-emerald-500/20 bg-emerald-500/5"}`}>
               <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-emerald-400" />
-                <span className="text-emerald-400 font-medium">Available now</span>
+                <Clock className={`h-4 w-4 ${availability === "not_available" ? "text-muted-foreground" : "text-emerald-400"}`} />
+                <span className={`font-medium ${availability === "not_available" ? "text-muted-foreground" : "text-emerald-400"}`}>
+                  {getAvailabilityLabel(availability)}
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Taking on new projects</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {availability === "not_available" ? "Not accepting new work at this time" : "Enquiries are welcome"}
+              </p>
             </div>
           </div>
 

@@ -2,20 +2,13 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Bot, Send, X, Loader2, Minimize2 } from "lucide-react"
+import { UserRound, Send, X, Loader2, Minimize2, Square } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
-import { Button } from "@/components/ui/button"
 
 interface Message {
   id: string
   role: "user" | "assistant"
   content: string
-}
-
-const INITIAL_MESSAGE: Message = {
-  id: "0",
-  role: "assistant",
-  content: "Hi! I'm Sachin's AI assistant. Ask me anything about his skills, projects, or how we can work together! 👋",
 }
 
 let idCounter = 1
@@ -28,11 +21,15 @@ function genId() {
 
 export function AIChatWidget() {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [requestError, setRequestError] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => () => abortControllerRef.current?.abort(), [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -52,13 +49,18 @@ export function AIChatWidget() {
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
+    setRequestError("")
 
     const assistantMessage: Message = { id: assistantId, role: "assistant", content: "" }
     setMessages((prev) => [...prev, assistantMessage])
 
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage].map((m) => ({
@@ -115,17 +117,21 @@ export function AIChatWidget() {
       // Flush any remaining buffered line once the stream ends.
       buffer += decoder.decode()
       if (buffer) processLine(buffer)
-    } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, content: "Sorry, I'm having trouble connecting right now. Please try again or reach out directly via the contact form." }
-            : m
-        )
-      )
+    } catch (error) {
+      if (controller.signal.aborted) {
+        setMessages((prev) => prev.filter((message) => message.id !== assistantId || message.content))
+      } else {
+        setMessages((prev) => prev.filter((message) => message.id !== assistantId))
+        setRequestError(error instanceof Error ? error.message : "Unable to connect to chat service")
+      }
     } finally {
+      if (abortControllerRef.current === controller) abortControllerRef.current = null
       setIsLoading(false)
     }
+  }
+
+  function stopResponse() {
+    abortControllerRef.current?.abort()
   }
 
   return (
@@ -143,10 +149,10 @@ export function AIChatWidget() {
             <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-gradient-to-r from-primary/10 to-purple/10 px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 border border-primary/30">
-                  <Bot className="h-4 w-4 text-primary" />
+                  <UserRound className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Sachin AI</p>
+                  <p className="text-sm font-semibold text-foreground">Sachin&apos;s Assistant</p>
                   <p className="text-xs text-emerald-400 flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
                     Online
@@ -173,7 +179,7 @@ export function AIChatWidget() {
                 >
                   {msg.role === "assistant" && (
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 mt-0.5">
-                      <Bot className="h-3 w-3 text-primary" />
+                      <UserRound className="h-3 w-3 text-primary" />
                     </div>
                   )}
                   <div
@@ -221,7 +227,20 @@ export function AIChatWidget() {
                   <Send className="h-3 w-3" />
                 )}
               </button>
+              {isLoading && (
+                <button
+                  type="button"
+                  onClick={stopResponse}
+                  className="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border px-2 text-xs text-foreground hover:bg-accent"
+                  aria-label="Stop response"
+                  title="Stop response"
+                >
+                  <Square className="h-3 w-3 fill-current" />
+                  Stop
+                </button>
+              )}
             </form>
+            {requestError && <p role="alert" className="px-3 pb-3 text-xs text-destructive">{requestError}</p>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -237,7 +256,7 @@ export function AIChatWidget() {
             ? "bg-secondary border border-border text-muted-foreground"
             : "bg-gradient-to-br from-primary to-purple text-white shadow-primary/30"
         )}
-        aria-label="Chat with AI"
+        aria-label="Chat with Sachin's assistant"
       >
         <AnimatePresence mode="wait">
           {open ? (
@@ -258,7 +277,7 @@ export function AIChatWidget() {
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <Bot className="h-7 w-7" />
+              <UserRound className="h-7 w-7" />
             </motion.span>
           )}
         </AnimatePresence>

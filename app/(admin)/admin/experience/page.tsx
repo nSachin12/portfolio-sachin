@@ -2,6 +2,7 @@ import Link from "next/link"
 import { createServiceClient } from "@/lib/supabase/server"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ExperienceOrderControls } from "@/components/admin/experience/ExperienceOrderControls"
 import { Plus, Pencil, MapPin, Calendar } from "lucide-react"
 import { formatDateRange, formatExperienceDuration } from "@/lib/utils/format"
 
@@ -31,7 +32,7 @@ export default async function AdminExperiencePage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {experiences.map((exp) => (
+          {experiences.map((exp, index) => (
             <div key={exp.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
               {exp.company_logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -60,6 +61,7 @@ export default async function AdminExperiencePage() {
                   {formatExperienceDuration(exp.start_date, exp.end_date, exp.is_current)}
                 </p>
               </div>
+              <ExperienceOrderControls id={exp.id} role={exp.role} index={index} total={experiences.length} />
               <Button asChild variant="ghost" size="icon" className="h-8 w-8">
                 <Link href={`/admin/experience/${exp.id}`}><Pencil className="h-4 w-4" /></Link>
               </Button>

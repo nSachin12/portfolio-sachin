@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import Link from "next/link"
 import { motion, useInView } from "framer-motion"
-import { ArrowRight, Mail, Sparkles } from "lucide-react"
+import { ArrowRight, BriefcaseBusiness, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function CTASection() {
@@ -31,7 +31,7 @@ export function CTASection() {
             transition={{ type: "spring", duration: 0.6, delay: 0.1 }}
             className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 mb-6 mx-auto"
           >
-            <Sparkles className="h-8 w-8 text-primary" />
+            <BriefcaseBusiness className="h-8 w-8 text-primary" />
           </motion.div>
 
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
@@ -46,7 +46,7 @@ export function CTASection() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Button asChild size="xl" variant="glow" className="gap-2">
               <Link href="/hire-me">
-                <Sparkles className="h-5 w-5" />
+                <BriefcaseBusiness className="h-5 w-5" />
                 Work With Me
                 <ArrowRight className="h-5 w-5" />
               </Link>
